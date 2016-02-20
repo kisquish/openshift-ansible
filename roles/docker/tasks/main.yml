@@ -3,7 +3,11 @@
 - name: Install docker
   action: "{{ ansible_pkg_mgr }} name=docker state=present"
   when: not openshift.common.is_atomic | bool
-  
+
+- name: Increase Docker start timeout
+  copy: src=docker.service.d dest=/etc/systemd/system/ owner=root group=root
+
+
 - name: enable and start the docker service
   service:
     name: docker
