@@ -18,6 +18,28 @@
   shell: iptables -I OUTPUT -o eth0 -d 224.0.0.0/8 -p vrrp -j ACCEPT
   when: check_vrrp_output.rc == 1
 
+# Configure prerouting
+- name: check prerouting firewall rules
+  shell: iptables -t nat -C PREROUTING -d 192.168.0.10/32 -i eth0 -p tcp -m tcp --dport 8443 -j DNAT --to-destination {{ vrrp_legacy_ip }}:8843
+  register: check_prerouting
+  failed_when: "check_prerouting.rc != 0 and 'No chain/target/match by that name' not in check_prerouting.stderr"
+  changed_when: False
+
+- name: add prerouting firewall rules
+  shell: iptables -t nat -A PREROUTING -d 192.168.0.10/32 -i eth0 -p tcp -m tcp --dport 8443 -j DNAT --to-destination {{ vrrp_legacy_ip }}:8843
+  when: check_prerouting.rc == 1
+
+# Configure postrouting
+- name: check prerouting firewall rules
+  shell: iptables -t nat -C POSTROUTING -o eth0 -p tcp -m tcp --sport 8443 -j MASQUERADE
+  register: check_postrouting
+  failed_when: "check_postrouting.rc != 0 and 'No chain/target/match by that name' not in check_postrouting.stderr"
+  changed_when: False
+
+- name: add INPUT vrrp firewall rules
+  shell: iptables -t nat -A POSTROUTING -o eth0 -p tcp -m tcp --sport 8443 -j MASQUERADE
+  when: check_postrouting.rc == 1
+
 - name: save firewall rule
   shell: iptables-save > /etc/sysconfig/iptables
 

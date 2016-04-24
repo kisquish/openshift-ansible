@@ -17,8 +17,8 @@ deployment_type=origin
 # Pacemaker HA environment must be able to self provision the
 # configured VIP. For installation openshift_master_cluster_hostname
 # must resolve to the configured VIP.
-openshift_master_cluster_method=pacemaker
-openshift_master_cluster_password=openshift_cluster
+openshift_master_cluster_method=native
+#openshift_master_cluster_password=openshift_cluster
 openshift_master_cluster_vip=192.168.124.10
 openshift_master_cluster_public_vip=192.168.124.10
 openshift_master_cluster_hostname=openshift-cluster.example.com
@@ -29,9 +29,9 @@ openshift_master_cluster_public_hostname=openshift-cluster.example.com
 
 # host group for masters
 [masters]
-master1.example.com vrrp_priority=100
-master2.example.com vrrp_priority=150
-master3.example.com vrrp_priority=200
+master1.example.com vrrp_priority=100 vrrp_legacy_ip=192.168.124.11
+master2.example.com vrrp_priority=150 vrrp_legacy_ip=192.168.124.12
+master3.example.com vrrp_priority=200 vrrp_legacy_ip=192.168.124.13
 
 
 # host group for etcd
