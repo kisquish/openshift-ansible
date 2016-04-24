@@ -1,0 +1,36 @@
+- name: check INPUT vrrp firewall rules
+  shell: iptables -C INPUT -i eth0 -d 224.0.0.0/8 -p vrrp -j ACCEPT
+  register: check_vrrp_input
+  failed_when: "check_vrrp_input.rc != 0 and 'Bad rule' not in check_vrrp_input.stderr"
+  changed_when: False
+
+- name: add INPUT vrrp firewall rules
+  shell: iptables -I INPUT -i eth0 -d 224.0.0.0/8 -p vrrp -j ACCEPT
+  when: check_vrrp_input.rc == 1
+
+- name: check OUPUT vrrp firewall rules
+  shell: iptables -C OUTPUT -o eth0 -d 224.0.0.0/8 -p vrrp -j ACCEPT
+  register: check_vrrp_output
+  failed_when: "check_vrrp_output.rc != 0 and 'Bad rule' not in check_vrrp_output.stderr"
+  changed_when: False
+
+- name: add OUPUT vrrp firewall rules
+  shell: iptables -I OUTPUT -o eth0 -d 224.0.0.0/8 -p vrrp -j ACCEPT
+  when: check_vrrp_output.rc == 1
+
+- name: save firewall rule
+  shell: iptables-save > /etc/sysconfig/iptables
+
+- name: install the latest version of Keepalived
+  yum: name=keepalived state=latest
+
+- name: copy Openshift Master health check script
+  template : src=keepalived/check_openshift_master.sh dest=/etc/keepalived/check_openshift_master.sh owner=root group=root mode=0755
+
+- name: copy Keepalived configuration
+  template : src=keepalived/keepalived.conf.j2 dest=/etc/keepalived/keepalived.conf owner=root group=root mode=0644
+  register: keepalived_conf
+
+- name: restart Keepalived
+  service: name=keepalived state=restarted enabled=yes
+  when: keepalived_conf.changed 

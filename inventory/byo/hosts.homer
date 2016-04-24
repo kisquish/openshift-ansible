@@ -29,9 +29,10 @@ openshift_master_cluster_public_hostname=openshift-cluster.example.com
 
 # host group for masters
 [masters]
-master1.example.com
-master2.example.com
-master3.example.com
+master1.example.com vrrp_priority=100
+master2.example.com vrrp_priority=150
+master3.example.com vrrp_priority=200
+
 
 # host group for etcd
 [etcd]
