@@ -1,3 +1,9 @@
+- name: Ensures /etc/systemd/system/origin-master-api.service.d dir exists
+  file: path=/etc/systemd/system/origin-master-api.service.d state=directory
+
+- name: Increase master start timeout
+  template: src=origin-master-api.service.d/origin-master-api.service dest=/etc/systemd/system/origin-master-api.service.d/origin-master-api.service
+
 - name: check INPUT vrrp firewall rules
   shell: iptables -C INPUT -i eth0 -d 224.0.0.0/8 -p vrrp -j ACCEPT
   register: check_vrrp_input

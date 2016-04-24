@@ -1,0 +1,5 @@
+[Unit]
+Description=Atomic OpenShift Master API
+
+[Service]
+TimeoutStartSec=300
