@@ -8,7 +8,7 @@ etcd
 [OSEv3:vars]
 ansible_ssh_user=root
 deployment_type=origin
-
+openshift_use_dnsmasq=False
 # Uncomment the following to enable htpasswd authentication; defaults to
 # DenyAllPasswordIdentityProvider.
 #openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
