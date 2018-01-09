@@ -36,6 +36,17 @@
       - prometheus-secrets
   changed_when: no
 
+- name: create prometheus serviceaccount
+  oc_serviceaccount:
+    state: present
+    name: prometheus-node-exporter
+    namespace: "{{ openshift_prometheus_namespace }}"
+  changed_when: no
+
+- name: annotate serviceaccount
+  command: >
+    {{ openshift_client_binary }} adm policy add-scc-to-user -z prometheus-node-exporter -n {{ openshift_prometheus_namespace }} hostaccess
+
 # TODO remove this when annotations are supported by oc_serviceaccount
 - name: annotate serviceaccount
   command: >
@@ -100,7 +111,7 @@
     {{ openshift_client_binary }} annotate --overwrite -n {{ openshift_prometheus_namespace }}
     service prometheus
     prometheus.io/scrape='true'
-    prometheus.io/scheme=https
+    prometheus.io/scheme=http
     service.alpha.openshift.io/serving-cert-secret-name=prometheus-tls
 
 # - name: annotate alerts service
@@ -241,4 +252,21 @@
     kind: deploymentconfig
     files:
       - "{{ tempdir }}/templates/prometheus.yaml"
+    delete_after: true
+
+- name: Set node-exporter template
+  template:
+    src: node-exporter.yml.j2
+    dest: "{{ tempdir }}/templates/node-exporter.yaml"
+  vars:
+    namespace: "{{ openshift_prometheus_namespace }}"
+
+- name: Set node-exporter DaemonSet
+  oc_obj:
+    state: present
+    name: "node-exporter"
+    namespace: "{{ openshift_prometheus_namespace }}"
+    kind: daemonset
+    files:
+      - "{{ tempdir }}/templates/node-exporter.yaml"
     delete_after: true
