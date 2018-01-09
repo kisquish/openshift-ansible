@@ -69,28 +69,28 @@
       #    annotations:
       #      service.alpha.openshift.io/serving-cert-secret-name: "{{item.name}}-tls"
     ports:
-      - port: 443
-        targetPort: 8443
+      - port: 80
+        targetPort: 9090
   with_items:
     - name: prometheus
 
-- name: Create alerts service
-  oc_service:
-    state: present
-    name: "{{ item.name }}"
-    namespace: "{{ openshift_prometheus_namespace }}"
-    selector:
-      app: prometheus
-    labels:
-      name: "{{ item.name }}"
-      #    TODO add annotations when supported
-      #    annotations:
-      #      service.alpha.openshift.io/serving-cert-secret-name: "{{item.name}}-tls"
-    ports:
-      - port: 443
-        targetPort: 9443
-  with_items:
-    - name: alerts
+# - name: Create alerts service
+#   oc_service:
+#     state: present
+#     name: "{{ item.name }}"
+#     namespace: "{{ openshift_prometheus_namespace }}"
+#     selector:
+#       app: prometheus
+#     labels:
+#       name: "{{ item.name }}"
+#       #    TODO add annotations when supported
+#       #    annotations:
+#       #      service.alpha.openshift.io/serving-cert-secret-name: "{{item.name}}-tls"
+#     ports:
+#       - port: 443
+#         targetPort: 9443
+#   with_items:
+#     - name: alerts
 
 
 # Annotate services with secret name
@@ -103,13 +103,13 @@
     prometheus.io/scheme=https
     service.alpha.openshift.io/serving-cert-secret-name=prometheus-tls
 
-- name: annotate alerts service
-  command: >
-    {{ openshift_client_binary }} annotate --overwrite -n {{ openshift_prometheus_namespace }}
-    service alerts 'service.alpha.openshift.io/serving-cert-secret-name=prometheus-alerts-tls'
+# - name: annotate alerts service
+#   command: >
+#     {{ openshift_client_binary }} annotate --overwrite -n {{ openshift_prometheus_namespace }}
+#     service alerts 'service.alpha.openshift.io/serving-cert-secret-name=prometheus-alerts-tls'
 
 # create prometheus and alerts routes
-- name: create prometheus and alerts routes
+- name: create prometheus (and alerts routes)
   oc_route:
     state: present
     name: "{{ item.name }}"
@@ -120,8 +120,8 @@
   with_items:
     - name: prometheus
       host: "{{ openshift_prometheus_hostname }}"
-    - name: alerts
-      host: "{{ openshift_prometheus_alerts_hostname }}"
+    # - name: alerts
+    #   host: "{{ openshift_prometheus_alerts_hostname }}"
 
 # Storage
 - name: create prometheus pvc
@@ -134,25 +134,25 @@
     storage_class_name: "{{ openshift_prometheus_sc_name }}"
   when: openshift_prometheus_storage_type == 'pvc'
 
-- name: create alertmanager pvc
-  oc_pvc:
-    namespace: "{{ openshift_prometheus_namespace }}"
-    name: "{{ openshift_prometheus_alertmanager_pvc_name }}"
-    access_modes: "{{ openshift_prometheus_alertmanager_pvc_access_modes }}"
-    volume_capacity: "{{ openshift_prometheus_alertmanager_pvc_size }}"
-    selector: "{{ openshift_prometheus_alertmanager_pvc_pv_selector }}"
-    storage_class_name: "{{ openshift_prometheus_alertmanager_sc_name }}"
-  when: openshift_prometheus_alertmanager_storage_type == 'pvc'
+# - name: create alertmanager pvc
+#   oc_pvc:
+#     namespace: "{{ openshift_prometheus_namespace }}"
+#     name: "{{ openshift_prometheus_alertmanager_pvc_name }}"
+#     access_modes: "{{ openshift_prometheus_alertmanager_pvc_access_modes }}"
+#     volume_capacity: "{{ openshift_prometheus_alertmanager_pvc_size }}"
+#     selector: "{{ openshift_prometheus_alertmanager_pvc_pv_selector }}"
+#     storage_class_name: "{{ openshift_prometheus_alertmanager_sc_name }}"
+#   when: openshift_prometheus_alertmanager_storage_type == 'pvc'
 
-- name: create alertbuffer pvc
-  oc_pvc:
-    namespace: "{{ openshift_prometheus_namespace }}"
-    name: "{{ openshift_prometheus_alertbuffer_pvc_name }}"
-    access_modes: "{{ openshift_prometheus_alertbuffer_pvc_access_modes }}"
-    volume_capacity: "{{ openshift_prometheus_alertbuffer_pvc_size }}"
-    selector: "{{ openshift_prometheus_alertbuffer_pvc_pv_selector }}"
-    storage_class_name: "{{ openshift_prometheus_alertbuffer_sc_name }}"
-  when: openshift_prometheus_alertbuffer_storage_type == 'pvc'
+# - name: create alertbuffer pvc
+#   oc_pvc:
+#     namespace: "{{ openshift_prometheus_namespace }}"
+#     name: "{{ openshift_prometheus_alertbuffer_pvc_name }}"
+#     access_modes: "{{ openshift_prometheus_alertbuffer_pvc_access_modes }}"
+#     volume_capacity: "{{ openshift_prometheus_alertbuffer_pvc_size }}"
+#     selector: "{{ openshift_prometheus_alertbuffer_pvc_pv_selector }}"
+#     storage_class_name: "{{ openshift_prometheus_alertbuffer_sc_name }}"
+#   when: openshift_prometheus_alertbuffer_storage_type == 'pvc'
 
 # prometheus configmap
 # Copy the additional rules file if it is defined
