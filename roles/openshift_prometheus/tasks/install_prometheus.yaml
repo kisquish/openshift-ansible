@@ -116,7 +116,7 @@
     host: "{{ item.host }}"
     namespace: "{{ openshift_prometheus_namespace }}"
     service_name: "{{ item.name }}"
-    tls_termination: reencrypt
+    tls_termination: edge
   with_items:
     - name: prometheus
       host: "{{ openshift_prometheus_hostname }}"
@@ -233,12 +233,12 @@
     namespace: "{{ openshift_prometheus_namespace }}"
 #    prom_replicas: "{{ openshift_prometheus_replicas }}"
 
-- name: Set prometheus stateful set
+- name: Set prometheus DeploymentConfig (was stateful set)
   oc_obj:
     state: present
     name: "prometheus"
     namespace: "{{ openshift_prometheus_namespace }}"
-    kind: statefulset
+    kind: deploymentconfig
     files:
       - "{{ tempdir }}/templates/prometheus.yaml"
     delete_after: true

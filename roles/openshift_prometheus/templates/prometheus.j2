@@ -1,18 +1,24 @@
-apiVersion: apps/v1beta1
-kind: StatefulSet
+apiVersion: v1
+kind: DeploymentConfig
 metadata:
   name: prometheus
   namespace: {{ namespace }}
   labels:
     app: prometheus
 spec:
-  updateStrategy:
-    type: RollingUpdate
-  podManagementPolicy: Parallel
+  replicas: 1
+  strategy:
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
   selector:
-    provider: openshift
-    matchLabels:
-      app: prometheus
+#    provider: openshift
+    app: prometheus
   template:
     metadata:
       name: prometheus
