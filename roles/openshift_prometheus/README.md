@@ -1,7 +1,11 @@
 OpenShift Prometheus
 ====================
 
-OpenShift Prometheus Installation
+OpenShift Prometheus Installation for OCP < 3.7
+------------------------------------------------
+
+**This role is a backport of the RedHat current work on deploying Prometheus on OCP.
+It aims to be compatible with OCP < 3.7 and OCP > 3.4**
 
 Requirements
 ------------
