@@ -43,9 +43,16 @@
     namespace: "{{ openshift_prometheus_namespace }}"
   changed_when: no
 
-- name: annotate serviceaccount
+- name: add prometheus-node-exporter serviceaccount to SCC hostaccess
   command: >
     {{ openshift_client_binary }} adm policy add-scc-to-user -z prometheus-node-exporter -n {{ openshift_prometheus_namespace }} hostaccess
+
+- name: create prometheus serviceaccount
+  oc_serviceaccount:
+    state: present
+    name: kube-state-metrics
+    namespace: "{{ openshift_prometheus_namespace }}"
+  changed_when: no
 
 # TODO remove this when annotations are supported by oc_serviceaccount
 - name: annotate serviceaccount
@@ -64,6 +71,14 @@
     resource_kind: cluster-role
     resource_name: cluster-reader
     user: "system:serviceaccount:{{ openshift_prometheus_namespace }}:prometheus"
+
+- name: Set cluster-reader permissions for kube-state-metrics
+  oc_adm_policy_user:
+    state: present
+    namespace: "{{ openshift_prometheus_namespace }}"
+    resource_kind: cluster-role
+    resource_name: cluster-reader
+    user: "system:serviceaccount:{{ openshift_prometheus_namespace }}:kube-state-metrics"
 
 # create prometheus and alerts services
 # TODO join into 1 task with loop
@@ -84,6 +99,21 @@
         targetPort: 9090
   with_items:
     - name: prometheus
+
+- name: Create kube-state-metrics service
+  oc_service:
+    state: present
+    name: "{{ item.name }}"
+    namespace: "{{ openshift_prometheus_namespace }}"
+    selector:
+      app: kube-state-metrics
+    labels:
+      name: "{{ item.name }}"
+    ports:
+      - port: 80
+        targetPort: 8080
+  with_items:
+    - name: kube-state-metrics
 
 # - name: Create alerts service
 #   oc_service:
@@ -269,4 +299,21 @@
     kind: daemonset
     files:
       - "{{ tempdir }}/templates/node-exporter.yaml"
+    delete_after: true
+
+- name: Set kube-state-metrics template
+  template:
+    src: kube-state-metrics.yml.j2
+    dest: "{{ tempdir }}/templates/kube-state-metrics.yaml"
+  vars:
+    namespace: "{{ openshift_prometheus_namespace }}"
+
+- name: Set kube-state-metrics deployment
+  oc_obj:
+    state: present
+    name: "kube-state-metrics"
+    namespace: "{{ openshift_prometheus_namespace }}"
+    kind: deploymentconfig
+    files:
+      - "{{ tempdir }}/templates/kube-state-metrics.yaml"
     delete_after: true

@@ -177,6 +177,12 @@ scrape_configs:
       - '{{ hostvars[host]['ansible_default_ipv4']['address'] }}:9100'
 {% endfor %}
 
+- job_name: 'kube-state-metrics'
+  scrape_interval: 30s
+  static_configs:
+    - targets:
+      - 'kube-state-metrics.{{ openshift_prometheus_namespace }}.svc.cluster.local'
+
 #alerting:
 #  alertmanagers:
 #  - scheme: http
